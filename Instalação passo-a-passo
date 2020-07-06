@@ -1,0 +1,84 @@
+Instalando dependências
+Debian 9
+ apt-get install ca-certificates apache2 libapache2-mod-php7.0 php7.0-cli php7.0 php7.0-curl php7.0-apcu php7.0-gd php7.0-imap php7.0-ldap php7.0-mysql php-cas php7.0-soap php7.0-mbstring php7.0-xml php7.0-xmlrpc mariadb-server
+Debian 10
+ apt-get install ca-certificates apache2 php7.3 php7.3-cli php7.3-curl php7.3-zip php7.3-gd php7.3-intl php-pear php-imagick php7.3-imap php-memcache php7.3-pspell php7.3-recode php7.3-tidy php7.3-xmlrpc php7.3-xsl php7.3-mbstring php-gettext php7.3-ldap php-cas php-apcu libapache2-mod-php7.3 php7.3-mysql php7.3-soap php7.3-xml mariadb-server
+Baixar a versão mais atual (consultar no site)
+http://glpi-project.org/downloads/
+ wget https://github.com/glpi-project/glpi/releases/download/9.2.3/glpi-9.2.3.tgz
+Já existe um versão mais nova (9.4.5) - Modo de instalação igual a versão 9.2.3
+ wget https://github.com/glpi-project/glpi/releases/download/9.4.5/glpi-9.4.5.tgz
+Extrair o GLPI
+ tar -zxvf glpi-9.2.3.tgz
+ tar -zxvf glpi-9.4.5.tgz
+Mover para a home do WEBServer
+ mv glpi /var/www/html
+Ajustar permissões e dono
+ chown www-data:www-data /var/www/html/glpi -Rf
+ chmod 775 /var/www/html/glpi -Rf
+Criar Banco de dados
+ mysql_secure_installation 
+ mysql -u root -p
+ 
+ create database glpidb;
+ create user 'glpi'@'localhost' identified by 'senhasegura';
+ grant all on glpidb.* to 'glpi'@'localhost';
+ flush privileges;
+ quit
+BUG Report
+BUG na instalação 9.4.X em Debian 10
+ Inicialmente foi verificado que ao instalar o GLPI 9.4.5 em sistema operacional Debian 10, o mesmo não passa da etapa de conexão com o banco de dados. Foi debugado e foi identificado que o Banco de dados não recebe os dados de maneira correta, por algum bug. Verificado o tempo que leva para terminar o processo, cerca de 50 minutos. Para resolver o problema pode-se fazer a instalação por meio do shell. segue abaixo os procedimentos.
+Após fazer a cópia dos arquivos extraídos do GLPI e Criar o banco de dados faça:
+ cd /var/www/html/glpi
+ php bin/console db:install --db-user glpi --db-password senhasegura
+ 
+ 
+   Database name:glpidb
+ +---------------+-----------+
+ | Database host | localhost |
+ | Database name | glpidb    |
+ | Database user | glpi      |
+ +---------------+-----------+
+ Do you want to continue ? [Yes/no]Yes
+
+Após verificar o Banco com o comando
+ php bin/console db:check
+Vai instalar no idioma inglês, podendo ser alterado na interface.
+ Usuário padrão: glpi
+ Senha padrão: glpi
+Configurar Apache
+ nano /etc/apache2/sites-available/glpi.conf
+ <Directory /var/www/html/glpi>
+  AllowOverride All
+ </Directory>
+ <Directory /var/www/html/glpi/config>
+ Options -Indexes
+  </Directory>
+ <Directory /var/www/html/glpi/files> Options -Indexes
+ </Directory>
+ a2ensite glpi
+Para PHP 7.0
+ nano /etc/php/7.0/apache2/php.ini
+
+Para PHP 7.3
+ nano /etc/php/7.3/apache2/php.ini
+ memory_limit = 512M
+ max_execution_time = 600
+ session.use_strict_mode = 0
+ session.use_trans_sid = 0
+ session.auto_start = off
+ upload_max_filesize = 128M
+ file_uploads = On
+ /etc/init.d/apache2 restart
+Acessar via web
+ http://IP_SERVER/glpi
+Configurar instalação
+ * Banco de dados
+ * Usuário e senha
+ * Termos (Aceitar)
+Primeiro acesso
+ Usuário: glpi
+ Senha: glpi
+Pós-Instalação
+ cd /var/www/html/glpi/install/ 
+ mv install.php install.php_old
